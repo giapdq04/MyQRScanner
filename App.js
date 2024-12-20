@@ -1,5 +1,6 @@
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { StatusBar } from 'expo-status-bar';
 import { useCallback, useRef, useState } from 'react';
 import { Button, Linking, StyleSheet, Text, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -42,6 +43,9 @@ export default function App() {
       flex: 1,
       justifyContent: 'center',
     }}>
+      <StatusBar style="light"
+      networkActivityIndicatorVisible={true}
+      />
       <CameraView
         barcodeScannerSettings={{
           barcodeTypes: ['aztec',
