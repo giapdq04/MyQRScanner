@@ -1,10 +1,17 @@
+import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Button, Linking, StyleSheet, Text, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export default function App() {
   const [permission, requestPermission] = useCameraPermissions()
   const [scanned, setScanned] = useState(false);
+  const bottomSheetRef = useRef(null);
+
+  const handleSheetChanges = useCallback((index) => {
+    console.log('handleSheetChanges', index);
+  }, []);
 
   if (!permission) {
     return <View />
@@ -31,7 +38,7 @@ export default function App() {
   };
 
   return (
-    <View style={{
+    <GestureHandlerRootView style={{
       flex: 1,
       justifyContent: 'center',
     }}>
@@ -61,7 +68,21 @@ export default function App() {
           style={{ position: 'absolute', bottom: 20 }}
         />
       )}
-    </View>
+      <BottomSheet
+        ref={bottomSheetRef}
+        onChange={handleSheetChanges}
+        snapPoints={['25%', '50%']}
+        enablePanDownToClose={true}
+      >
+        <BottomSheetView style={{
+          flex: 1,
+          padding: 36,
+          alignItems: 'center',
+        }}>
+          <Text>Awesome 🎉</Text>
+        </BottomSheetView>
+      </BottomSheet>
+    </GestureHandlerRootView>
   );
 }
 
