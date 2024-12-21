@@ -1,23 +1,38 @@
+import Feather from '@expo/vector-icons/Feather';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useRef, useState } from 'react';
-import { Button, FlatList, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Button, FlatList, Linking, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Slider } from 'react-native-awesome-slider';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import Feather from '@expo/vector-icons/Feather';
-import AntDesign from '@expo/vector-icons/AntDesign';
+import { useSharedValue } from 'react-native-reanimated';
 
 export default function App() {
   const [permission, requestPermission] = useCameraPermissions()
-  const [scanned, setScanned] = useState(false);
   const [isActive, setIsActive] = useState(true)
   const bottomSheetRef = useRef(null);
+  const newCodeRef = useRef(null);
+  const [newCode, setNewCode] = useState({})
   const [codeList, setCodeList] = useState([]);
+  const [zoomValue, setZoomValue] = useState(0)
+  const progress = useSharedValue(0);
+  const min = useSharedValue(0);
+  const max = useSharedValue(100);
 
   const handleSheetChanges = useCallback((index) => {
-    console.log('handleSheetChanges', index);
+    if (index == -1) {
+      setIsActive(true)
+    }
   }, []);
+
+  const handleNewCodeSheetChanges = useCallback((index) => {
+    if (index == -1) {
+      setIsActive(true)
+      setNewCode({})
+    }
+  })
 
   if (!permission) {
     return <View />
@@ -38,10 +53,14 @@ export default function App() {
 
   }
 
-  const handleBarCodeScanned = ({ data }) => {
-    console.log('handleBarCodeScanned', data);
+  const handleBarCodeScanned = ({ data, type }) => {
+    console.log(data, type);
 
-    setScanned(true);
+    setIsActive(!isActive)
+    setNewCode({
+      date: new Date().toISOString(),
+      data,
+    })
     setCodeList((prev) => (
       [
         {
@@ -54,10 +73,9 @@ export default function App() {
 
     if (data.startsWith('http')) {
       Linking.openURL(data);
-      bottomSheetRef.current.collapse();
-      return
     }
-    bottomSheetRef.current.expand();
+
+    newCodeRef.current.expand();
   };
 
   const isLink = (data) => {
@@ -76,10 +94,13 @@ export default function App() {
     return `${hours}:${minutes} ${day}/${month}/${year}`;
   }
 
+  const handleLinkPress = (link) => {
+    Linking.openURL(link);
+  }
+
   const renderItem = ({ item }) => {
     return (
       <View style={{
-        // flexDirection: 'row',
         justifyContent: 'space-between',
         padding: 8,
         borderBottomWidth: 1,
@@ -88,9 +109,13 @@ export default function App() {
       }}>
         <Text>{formatDate(item.date)}</Text>
         <Text
+          style={{
+            color: isLink(item.data) ? 'blue' : 'black',
+            textDecorationLine: isLink(item.data) ? 'underline' : 'none',
+          }}
           numberOfLines={1}
           ellipsizeMode="middle"
-          onPress={() => Linking.openURL(item.data)}>{item.data}</Text>
+          onPress={() => handleLinkPress(item.data)}>{item.data}</Text>
       </View>
     )
   }
@@ -99,23 +124,33 @@ export default function App() {
     setIsActive(!isActive)
   }
 
+  const openHistory = () => {
+    setIsActive(false)
+    bottomSheetRef.current.expand();
+  }
+
+  const closeAllBottomSheet = () => {
+    bottomSheetRef.current.close();
+    newCodeRef.current.close();
+  }
+
+
   return (
     <GestureHandlerRootView style={{
       flex: 1,
       justifyContent: 'center',
     }}>
-      <StatusBar style="light"
-        networkActivityIndicatorVisible={true}
-      />
+      <StatusBar style="light" />
       {
         isActive ? (
           <CameraView
+            zoom={zoomValue}
             barcodeScannerSettings={{
               barcodeTypes: [
                 'aztec', 'ean13', 'ean8', 'qr', 'pdf417', 'upc_e', 'datamatrix', 'code39', 'code93', 'itf14', 'codabar', 'code128', 'upc_a',
               ],
             }}
-            onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+            onBarcodeScanned={handleBarCodeScanned}
             style={{
               flex: 1,
               justifyContent: 'center',
@@ -123,45 +158,110 @@ export default function App() {
           >
           </CameraView>
         ) : (
-          <View style={{
-            flex: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
-            backgroundColor: '#000'
-          }}>
+          <Pressable
+            onPress={closeAllBottomSheet}
+            style={{
+              flex: 1,
+              justifyContent: 'center',
+              alignItems: 'center',
+              backgroundColor: '#000'
+            }}>
             <Text style={{
               color: '#fff',
             }}>Camera đã bị tắt</Text>
 
-          </View>
+          </Pressable>
         )
       }
 
-      {scanned && (
-        <TouchableOpacity
-          onPress={() => setScanned(false)}
-          style={{
-            position: 'absolute', bottom: 20, left: 20, backgroundColor: '#fff', width: 50, height: 50, borderRadius: 25,
-            justifyContent: 'center',
-            alignItems: 'center'
-          }}>
-          <AntDesign name="back" size={24} color="#000" />
-        </TouchableOpacity>
-      )}
-
-      <TouchableOpacity
-        onPress={toggleCamera}
-        style={{
-          position: 'absolute', bottom: 20, right: 20, backgroundColor: '#fff', width: 50, height: 50, borderRadius: 25,
-          justifyContent: 'center',
-          alignItems: 'center'
+      <View style={{
+        position: 'absolute',
+        bottom: 20,
+        left: 0,
+        right: 0,
+        height: '15%',
+        justifyContent: 'space-between',
+      }}>
+        <View style={{
+          alignItems: 'center',
         }}>
-        <Feather name={isActive ? 'camera-off' : 'camera'} size={24} color="#000" />
-      </TouchableOpacity>
+          <Slider
+            style={{ width: '80%' }}
+            progress={progress}
+            minimumValue={min}
+            maximumValue={max}
+            onSlidingComplete={(value) => {
+              console.log(value);
+              setZoomValue(value / 100)
+            }}
+            containerStyle={{
+              borderRadius: 50
+            }}
+          />
+        </View>
+
+        <View style={{
+          flexDirection: 'row',
+          width: '100%',
+          justifyContent: 'space-around',
+        }}>
+          <TouchableOpacity
+            onPress={openHistory}
+            style={{
+              backgroundColor: '#fff', width: 50, height: 50, borderRadius: 25,
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}>
+            <FontAwesome name='history' size={24} color="#333" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => {
+              console.log(progress.value);
+            }}
+            style={{
+              backgroundColor: '#fff', width: 50, height: 50, borderRadius: 25,
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}>
+            <Feather name="zoom-in" size={24} color="black" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={toggleCamera}
+            style={{
+              backgroundColor: '#fff', width: 50, height: 50, borderRadius: 25,
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}>
+            <Feather name={isActive ? 'camera-off' : 'camera'} size={24} color="#000" />
+          </TouchableOpacity>
+        </View>
+
+      </View>
+
+
+      <BottomSheet
+        ref={newCodeRef}
+        onChange={handleNewCodeSheetChanges}
+        snapPoints={['20%']}
+        enablePanDownToClose={true}
+        index={-1}
+      >
+        <BottomSheetView style={{
+          flex: 1,
+          padding: 36,
+          alignItems: 'center',
+        }}>
+          <Text>Data: {newCode.data}</Text>
+
+          <Text>Date: {formatDate(newCode.date)}</Text>
+        </BottomSheetView>
+      </BottomSheet>
       <BottomSheet
         ref={bottomSheetRef}
         onChange={handleSheetChanges}
-        snapPoints={['10%', '25%', '50%']}
+        snapPoints={['50%']}
         enablePanDownToClose={true}
         index={-1}
       >
