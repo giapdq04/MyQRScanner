@@ -17,12 +17,13 @@ export default function App() {
   const [newCode, setNewCode] = useState({})
   const [codeList, setCodeList] = useState([]);
   const [zoomValue, setZoomValue] = useState(0)
+  const [isZoom, setIsZoom] = useState(false)
   const progress = useSharedValue(0);
   const min = useSharedValue(0);
   const max = useSharedValue(100);
 
   const handleSheetChanges = useCallback((index) => {
-    if (index == -1) {
+    if (index == -1) { // trường hợp đóng bottom sheet
       setIsActive(true)
     }
   }, []);
@@ -186,12 +187,11 @@ export default function App() {
           alignItems: 'center',
         }}>
           <Slider
-            style={{ width: '80%' }}
+            style={{ width: '80%', display: isZoom ? 'flex' : 'none' }}
             progress={progress}
             minimumValue={min}
             maximumValue={max}
             onSlidingComplete={(value) => {
-              console.log(value);
               setZoomValue(value / 100)
             }}
             containerStyle={{
@@ -217,14 +217,17 @@ export default function App() {
 
           <TouchableOpacity
             onPress={() => {
-              console.log(progress.value);
+              if (!isZoom) {
+                setIsActive(true)
+              }
+              setIsZoom(!isZoom)
             }}
             style={{
               backgroundColor: '#fff', width: 50, height: 50, borderRadius: 25,
               justifyContent: 'center',
               alignItems: 'center'
             }}>
-            <Feather name="zoom-in" size={24} color="black" />
+            <Feather name={isZoom ? 'zoom-out' : "zoom-in"} size={24} color="black" />
           </TouchableOpacity>
 
           <TouchableOpacity
