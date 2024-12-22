@@ -8,6 +8,7 @@ import { Button, FlatList, Linking, Pressable, StyleSheet, Text, TouchableOpacit
 import { Slider } from 'react-native-awesome-slider';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSharedValue } from 'react-native-reanimated';
+import { LinkPreview } from '@flyerhq/react-native-link-preview'
 
 export default function App() {
   const [permission, requestPermission] = useCameraPermissions()
@@ -71,11 +72,6 @@ export default function App() {
         ...prev
       ]
     ))
-
-    if (data.startsWith('http')) {
-      Linking.openURL(data);
-    }
-
     newCodeRef.current.expand();
   };
 
@@ -247,7 +243,7 @@ export default function App() {
       <BottomSheet
         ref={newCodeRef}
         onChange={handleNewCodeSheetChanges}
-        snapPoints={['20%']}
+        snapPoints={['20%', '60%']}
         enablePanDownToClose={true}
         index={-1}
       >
@@ -259,6 +255,8 @@ export default function App() {
           <Text>Data: {newCode.data}</Text>
 
           <Text>Date: {formatDate(newCode.date)}</Text>
+          <LinkPreview
+            text='Đi đến https://www.youtube.com/watch?v=JqUPAkbvRJA' />
         </BottomSheetView>
       </BottomSheet>
       <BottomSheet
