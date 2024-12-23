@@ -4,7 +4,7 @@ import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useRef, useState } from 'react';
-import { Button, FlatList, Linking, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Button, FlatList, Linking, Pressable, StyleSheet, Text, TouchableOpacity, View, Image } from 'react-native';
 import { Slider } from 'react-native-awesome-slider';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSharedValue } from 'react-native-reanimated';
@@ -252,11 +252,29 @@ export default function App() {
           padding: 36,
           alignItems: 'center',
         }}>
-          <Text>Data: {newCode.data}</Text>
-
-          <Text>Date: {formatDate(newCode.date)}</Text>
           <LinkPreview
-            text='Đi đến https://www.youtube.com/watch?v=JqUPAkbvRJA' />
+            text={newCode.data}
+            renderText={() => { }}
+          />
+
+          <TouchableOpacity
+            onPress={() => {
+              Linking.openURL(newCode.data)
+            }}
+            style={{
+              backgroundColor: '#4287f5',
+              paddingHorizontal: 30,
+              paddingVertical: 15,
+              borderRadius: 10,
+              marginTop: 20,
+            }}>
+            <Text style={{
+              color: '#fff',
+              fontWeight: 'bold',
+            }}>
+              Truy cập
+            </Text>
+          </TouchableOpacity>
         </BottomSheetView>
       </BottomSheet>
       <BottomSheet
