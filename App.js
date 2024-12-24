@@ -4,11 +4,12 @@ import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useRef, useState } from 'react';
-import { Button, FlatList, Linking, Pressable, StyleSheet, Text, TouchableOpacity, View, Image } from 'react-native';
+import { Button, FlatList, Linking, Pressable, StyleSheet, Text, TouchableOpacity, View, Image, ToastAndroid } from 'react-native';
 import { Slider } from 'react-native-awesome-slider';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSharedValue } from 'react-native-reanimated';
 import { LinkPreview } from '@flyerhq/react-native-link-preview'
+import Entypo from '@expo/vector-icons/Entypo';
 
 export default function App() {
   const [permission, requestPermission] = useCameraPermissions()
@@ -19,6 +20,7 @@ export default function App() {
   const [codeList, setCodeList] = useState([]);
   const [zoomValue, setZoomValue] = useState(0)
   const [isZoom, setIsZoom] = useState(false)
+  const [isFlash, setIsFlash] = useState(false)
   const progress = useSharedValue(0);
   const min = useSharedValue(0);
   const max = useSharedValue(100);
@@ -119,6 +121,9 @@ export default function App() {
 
   const toggleCamera = () => {
     setIsActive(!isActive)
+    if (isActive && isFlash) {
+      setIsFlash(false)
+    }
   }
 
   const openHistory = () => {
@@ -131,6 +136,21 @@ export default function App() {
     newCodeRef.current.close();
   }
 
+  const turnOnFlash = () => {
+    if (isActive) {
+      setIsFlash(!isFlash)
+    } else {
+      ToastAndroid.show('Vui lòng bật camera trước', ToastAndroid.SHORT)
+    }
+  }
+
+  const toggleZoom = () => {
+    if (!isZoom) {
+      setIsActive(true)
+    }
+    setIsZoom(!isZoom)
+  }
+
 
   return (
     <GestureHandlerRootView style={{
@@ -141,6 +161,7 @@ export default function App() {
       {
         isActive ? (
           <CameraView
+            enableTorch={isFlash}
             zoom={zoomValue}
             barcodeScannerSettings={{
               barcodeTypes: [
@@ -212,18 +233,23 @@ export default function App() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => {
-              if (!isZoom) {
-                setIsActive(true)
-              }
-              setIsZoom(!isZoom)
-            }}
+            onPress={toggleZoom}
             style={{
               backgroundColor: '#fff', width: 50, height: 50, borderRadius: 25,
               justifyContent: 'center',
               alignItems: 'center'
             }}>
             <Feather name={isZoom ? 'zoom-out' : "zoom-in"} size={24} color="black" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={turnOnFlash}
+            style={{
+              backgroundColor: isFlash ? "#333" : "#fff", width: 50, height: 50, borderRadius: 25,
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}>
+            <Entypo name="flashlight" size={24} color={isFlash ? "#fff" : "#333"} />
           </TouchableOpacity>
 
           <TouchableOpacity
